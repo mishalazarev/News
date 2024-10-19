@@ -20,7 +20,9 @@ class RoomService : RoomRepository {
         articleDao = dataBase.getArticleDao()
     }
 
-    override fun putNewArticle(newArticle: Article) {
+    override fun getArticleDao(): ArticleDao = articleDao
+
+    override fun addBookmark(newArticle: Article) {
         articleDao.putNewArticle(newArticle)
     }
 
@@ -31,7 +33,7 @@ class RoomService : RoomRepository {
         }
     }
 
-    override suspend fun deleteArticle(deletedArticle: Article) {
+    override suspend fun removeBookmark(deletedArticle: Article) {
         withContext(Dispatchers.IO) {
             articleDao.deleteArticle(deletedArticle)
         }

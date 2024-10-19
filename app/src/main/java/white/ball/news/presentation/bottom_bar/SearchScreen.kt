@@ -38,10 +38,12 @@ import white.ball.news.domain.util.RenderUtil
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import white.ball.news.presentation.view_model.BookmarksViewModel
 
 @Composable
 fun SearchScreen(
     articles: MutableState<List<Article>>,
+    bookmarksViewModel: BookmarksViewModel,
     clickArticle: (Article) -> Unit,
     roomRepository: RoomRepository,
     context: Context
@@ -217,15 +219,11 @@ fun SearchScreen(
                                                 !currentArticle.isInYourBookmark
                                             if (currentArticle.isInYourBookmark) {
                                                 coroutineScope.launch(Dispatchers.IO) {
-                                                    roomRepository.putNewArticle(
-                                                        currentArticle
-                                                    )
+                                                    bookmarksViewModel.addBookmark(currentArticle)
                                                 }
                                             } else {
                                                 coroutineScope.launch(Dispatchers.IO) {
-                                                    roomRepository.deleteArticle(
-                                                        currentArticle
-                                                    )
+                                                    bookmarksViewModel.removeBookmark(currentArticle)
                                                 }
                                             }
                                             renderUtil.loadArticleIconBookmark(

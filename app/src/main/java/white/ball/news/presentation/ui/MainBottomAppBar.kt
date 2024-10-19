@@ -48,12 +48,14 @@ import white.ball.news.data.api.ApiService
 import white.ball.news.data.api.TAG
 import white.ball.news.data.storage.service.RoomService
 import white.ball.news.domain.model.Article
+import white.ball.news.presentation.view_model.BookmarksViewModel
 
 @ExperimentalMaterial3Api
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MainBottomAppBar(
     articles: MutableState<List<Article>>,
+    bookmarksViewModel: BookmarksViewModel,
     navController: NavHostController,
     isLoading: MutableState<Boolean>,
     snackbarHostState: SnackbarHostState,
@@ -77,6 +79,7 @@ fun MainBottomAppBar(
                     articles,
                     apiService,
                     roomService,
+                    bookmarksViewModel,
                 )
             },
             isLoading
@@ -90,6 +93,7 @@ fun MainBottomAppBar(
         articles,
         apiService,
         roomService,
+        bookmarksViewModel,
     )
 
     Scaffold(

@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import white.ball.news.R
 import white.ball.news.domain.repository.RoomRepository
 import white.ball.news.presentation.ui.theme.AdditionalInformationColor
+import white.ball.news.presentation.view_model.BookmarksViewModel
 
 
 @Composable
@@ -52,18 +53,11 @@ fun DetailArticleScreen(
     clickArticle: Article,
     roomRepository: RoomRepository,
     snackbarHostState: SnackbarHostState,
+    bookmarksViewModel: BookmarksViewModel,
     context: Context,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val isSubscribed = remember { mutableStateOf(clickArticle.isInYourBookmark) }
-
-    val articlesInBookmarksState = remember { mutableStateOf<List<Article>>(emptyList()) }
-
-    LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            articlesInBookmarksState.value = roomRepository.getArticlesInBookmarks()
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -134,10 +128,8 @@ fun DetailArticleScreen(
                                 .clickable {
                                     clickArticle.isInYourBookmark = false
                                     isSubscribed.value = clickArticle.isInYourBookmark
-                                    articlesInBookmarksState.value = articlesInBookmarksState.value
-                                        .filter { it.title == clickArticle.title }
                                     coroutineScope.launch(Dispatchers.IO) {
-                                        roomRepository.deleteArticle(clickArticle)
+                                        bookmarksViewModel.removeBookmark(clickArticle)
                                     }
                             }
                         )
@@ -151,13 +143,9 @@ fun DetailArticleScreen(
                                 .clickable {
                                     clickArticle.isInYourBookmark = true
                                     isSubscribed.value = clickArticle.isInYourBookmark
-                                    val articlesUpdated = mutableListOf<Article>()
-                                    articlesUpdated.addAll(articlesInBookmarksState.value)
-                                    articlesUpdated.add(clickArticle)
-                                    articlesInBookmarksState.value = articlesUpdated
 
                                     coroutineScope.launch(Dispatchers.IO) {
-                                      roomRepository.putNewArticle(clickArticle)
+                                        bookmarksViewModel.addBookmark(clickArticle)
                                      }
                                 }
                         )

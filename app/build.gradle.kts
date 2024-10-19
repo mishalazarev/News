@@ -93,4 +93,7 @@ dependencies {
 
     // coroutine
     implementation(libs.kotlinx.coroutines.android)
+
+    // viewmodel
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 }

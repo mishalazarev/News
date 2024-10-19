@@ -33,23 +33,15 @@ import kotlinx.coroutines.launch
 import white.ball.news.R
 import white.ball.news.domain.model.Article
 import white.ball.news.domain.repository.RoomRepository
+import white.ball.news.presentation.view_model.BookmarksViewModel
 
 
 @Composable
 fun BookmarksScreen(
+    bookmarksViewModel: BookmarksViewModel,
     clickArticle: (Article) -> Unit,
-    roomRepository: RoomRepository
+    roomRepository: RoomRepository,
 ) {
-    val articlesInBookmarksState = remember { mutableStateOf<List<Article>>(emptyList()) }
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            val articles = roomRepository.getArticlesInBookmarks()
-            articlesInBookmarksState.value = articles
-        }
-    }
-
     Column(
         modifier = Modifier.fillMaxSize()
             .padding(start = 10.dp, end = 10.dp),
@@ -57,8 +49,8 @@ fun BookmarksScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         LazyColumn {
-            items(articlesInBookmarksState.value.size) { index ->
-                val currentArticleInBookmark = articlesInBookmarksState.value[index]
+            items(bookmarksViewModel.articlesInBookmarks.size) { index ->
+                val currentArticleInBookmark = bookmarksViewModel.articlesInBookmarks[index]
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()

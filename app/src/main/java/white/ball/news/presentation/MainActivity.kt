@@ -18,16 +18,19 @@ import white.ball.news.domain.model.Article
 import white.ball.news.domain.util.TextUtil
 import white.ball.news.presentation.ui.MainActivityContent
 import white.ball.news.presentation.ui.theme.NewsTheme
+import white.ball.news.presentation.view_model.BookmarksViewModel
 
 @ExperimentalMaterial3Api
 class MainActivity : ComponentActivity() {
     private val textUtil = TextUtil()
     private val apiService = ApiService()
     private val roomService = RoomService()
+    private lateinit var bookmarksViewModel: BookmarksViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         roomService.loadDataBase(application)
+        bookmarksViewModel = BookmarksViewModel(roomService)
         installSplashScreen()
         enableEdgeToEdge()
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
@@ -55,6 +58,7 @@ class MainActivity : ComponentActivity() {
                     snackbarController = snackBarController,
                     apiService = apiService,
                     context = LocalContext.current,
+                    bookmarksViewModel = bookmarksViewModel
                 )
             }
         }

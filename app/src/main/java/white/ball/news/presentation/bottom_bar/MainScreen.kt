@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,9 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,32 +40,27 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import white.ball.news.R
-import white.ball.news.data.api.TAG
 import white.ball.news.domain.model.Article
 import white.ball.news.domain.repository.RoomRepository
-import white.ball.news.domain.util.RenderUtil
-import white.ball.news.presentation.ui.theme.AdditionalInformationColor
 import white.ball.news.presentation.ui.theme.ArticleBlockColor
 import white.ball.news.presentation.ui.theme.MainColor
+import white.ball.news.presentation.view_model.BookmarksViewModel
 
 @Composable
 fun MainScreen(
     clickArticle: (Article) -> Unit,
     articles: MutableState<List<Article>>,
     roomRepository: RoomRepository,
+    bookmarksViewModel: BookmarksViewModel,
     context: Context
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val articlesInBookmarksState = remember { mutableStateOf<List<Article>>(emptyList()) }
 
     roomRepository.loadDataBase(context)
 
     LaunchedEffect(Unit) {
-        val articlesInBookmark = roomRepository.getArticlesInBookmarks()
-        articlesInBookmarksState.value = articlesInBookmark
-
         val updatedArticles = articles.value.map { article ->
-            val bookmarkArticle = articlesInBookmarksState.value.find { it.title == article.title }
+            val bookmarkArticle = bookmarksViewModel.articlesInBookmarks.find { it.title == article.title }
             bookmarkArticle ?: article
         }
         articles.value = updatedArticles
@@ -256,11 +252,11 @@ fun MainScreen(
                                                 currentArticle.value.isInYourBookmark = !currentArticle.value.isInYourBookmark
                                                 if (currentArticle.value.isInYourBookmark) {
                                                     coroutineScope.launch(Dispatchers.IO) {
-                                                        roomRepository.putNewArticle(currentArticle.value)
+                                                        bookmarksViewModel.addBookmark(currentArticle.value)
                                                     }
                                                 } else {
                                                     coroutineScope.launch(Dispatchers.IO) {
-                                                        roomRepository.deleteArticle(currentArticle.value)
+                                                        bookmarksViewModel.removeBookmark(currentArticle.value)
                                                     }
                                                 }
                                             }

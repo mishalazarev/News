@@ -19,6 +19,7 @@ import white.ball.news.presentation.bottom_bar.MainScreen
 import white.ball.news.presentation.bottom_bar.SearchScreen
 import white.ball.news.presentation.detail_screen.DetailArticleScreen
 import white.ball.news.presentation.ui.InternetNotWorking
+import white.ball.news.presentation.view_model.BookmarksViewModel
 
 @Composable
 fun MainNavController(
@@ -28,6 +29,7 @@ fun MainNavController(
     articles: MutableState<List<Article>>,
     apiService: ApiService,
     roomService: RoomService,
+    bookmarksViewModel: BookmarksViewModel,
 ) {
     val textUtil = TextUtil()
     val listenerClickArticle = remember { mutableStateOf<Article?>(null) }
@@ -45,7 +47,8 @@ fun MainNavController(
                 clickArticle = clickArticleHandler,
                 articles = articles,
                 roomRepository = roomService,
-                context = context
+                context = context,
+                bookmarksViewModel = bookmarksViewModel
             )
         }
 
@@ -66,13 +69,15 @@ fun MainNavController(
         composable(route = ItemBottomBar.BookmarksScreen.route) {
             BookmarksScreen(
                 clickArticle = clickArticleHandler,
-                roomService
+                roomRepository = roomService,
+                bookmarksViewModel = bookmarksViewModel
             )
         }
 
         composable(route = ItemBottomBar.SearchScreen.route) {
             SearchScreen(
                 articles = articles,
+                bookmarksViewModel = bookmarksViewModel,
                 clickArticle = clickArticleHandler,
                 roomRepository = roomService,
                 context = context
@@ -84,7 +89,8 @@ fun MainNavController(
                 clickArticle = listenerClickArticle.value!!,
                 roomRepository = roomService,
                 snackbarHostState = snackbarHostState,
-                context = context
+                context = context,
+                bookmarksViewModel = bookmarksViewModel,
             )
         }
     }
