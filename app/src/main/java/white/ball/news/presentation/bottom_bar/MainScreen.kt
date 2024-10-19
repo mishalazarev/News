@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,7 +54,6 @@ fun MainScreen(
     roomRepository: RoomRepository,
     context: Context
 ) {
-    val renderUtil = RenderUtil()
     val coroutineScope = rememberCoroutineScope()
     val articlesInBookmarksState = remember { mutableStateOf<List<Article>>(emptyList()) }
 
@@ -62,6 +62,12 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         val articlesInBookmark = roomRepository.getArticlesInBookmarks()
         articlesInBookmarksState.value = articlesInBookmark
+
+        val updatedArticles = articles.value.map { article ->
+            val bookmarkArticle = articlesInBookmarksState.value.find { it.title == article.title }
+            bookmarkArticle ?: article
+        }
+        articles.value = updatedArticles
     }
 
     Column(
@@ -94,7 +100,9 @@ fun MainScreen(
                         },
                         contentDescription = null,
                         modifier = Modifier
+                            .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp)),
+                        contentScale = ContentScale.Crop,
                         error = painterResource(R.drawable.no_image),
                     )
 
@@ -160,16 +168,16 @@ fun MainScreen(
                 } else {
                     articles.value.size - 1
                 }) { index ->
-                val currentArticle = articles.value[index + 1]
+                val currentArticle: MutableState<Article> = remember { mutableStateOf(articles.value[index + 1]) }
 
-                if (currentArticle.title != "[Removed]" && currentArticle.urlToImage != null) {
+                if (currentArticle.value.title != "[Removed]" && currentArticle.value.urlToImage != null) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
                             .padding(top = 10.dp)
                             .clickable {
-                                clickArticle(currentArticle)
+                                clickArticle(currentArticle.value)
                             },
                     ) {
                         Row(
@@ -179,7 +187,7 @@ fun MainScreen(
                         ) {
                             AsyncImage(
                                 model = if (articles.value.isNotEmpty()) {
-                                    currentArticle.urlToImage
+                                    currentArticle.value.urlToImage
                                 } else {
                                     R.drawable.no_image
                                 },
@@ -194,7 +202,7 @@ fun MainScreen(
 
                             Column {
                                 Text(
-                                    text = currentArticle.title,
+                                    text = currentArticle.value.title,
                                     style = TextStyle(
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Normal,
@@ -212,7 +220,7 @@ fun MainScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = currentArticle.sourceName,
+                                            text = currentArticle.value.sourceName,
                                             style = TextStyle(
                                                 fontSize = 14.sp,
                                                 color = MainColor,
@@ -225,7 +233,7 @@ fun MainScreen(
                                             maxLines = 1
                                         )
                                         Text(
-                                            text = currentArticle.publishedAt,
+                                            text = currentArticle.value.publishedAt,
                                             style = TextStyle(
                                                 fontSize = 11.sp,
                                                 color = Color.Gray
@@ -235,36 +243,26 @@ fun MainScreen(
                                         )
                                     }
                                     Image(
-                                        painter = painterResource(
-                                            renderUtil.loadArticleIconBookmark(
-                                                currentArticle,
-                                                articlesInBookmarksState.value
-                                            )
-                                        ),
+                                        painter = if (articles.value[index + 1].isInYourBookmark) {
+                                            painterResource(R.drawable.icon_remove_bookmark_default)
+                                        } else  {
+                                            painterResource(R.drawable.icon_add_bookmark_default)
+                                        },
                                         contentDescription = null,
                                         modifier = Modifier
                                             .padding(end = 20.dp, bottom = 5.dp)
                                             .size(25.dp)
                                             .clickable {
-                                                currentArticle.isInYourBookmark =
-                                                    !currentArticle.isInYourBookmark
-                                                if (currentArticle.isInYourBookmark) {
+                                                currentArticle.value.isInYourBookmark = !currentArticle.value.isInYourBookmark
+                                                if (currentArticle.value.isInYourBookmark) {
                                                     coroutineScope.launch(Dispatchers.IO) {
-                                                        roomRepository.putNewArticle(
-                                                            currentArticle
-                                                        )
+                                                        roomRepository.putNewArticle(currentArticle.value)
                                                     }
                                                 } else {
                                                     coroutineScope.launch(Dispatchers.IO) {
-                                                        roomRepository.deleteArticle(
-                                                            currentArticle
-                                                        )
+                                                        roomRepository.deleteArticle(currentArticle.value)
                                                     }
                                                 }
-                                                renderUtil.loadArticleIconBookmark(
-                                                    currentArticle,
-                                                    articlesInBookmarksState.value
-                                                )
                                             }
                                     )
                                 }

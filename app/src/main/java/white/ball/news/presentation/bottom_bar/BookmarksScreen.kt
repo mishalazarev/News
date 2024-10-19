@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
+import white.ball.news.R
 import white.ball.news.domain.model.Article
 import white.ball.news.domain.repository.RoomRepository
 
@@ -77,7 +79,8 @@ fun BookmarksScreen(
                             contentDescription = null,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
-                                .size(width = 150.dp, height = 70.dp)
+                                .size(width = 150.dp, height = 70.dp),
+                            error = painterResource(R.drawable.no_image)
                         )
                         Column {
                             Text(

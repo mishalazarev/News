@@ -1,10 +1,10 @@
 package white.ball.news.presentation.detail_screen
 
-import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,15 +18,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import white.ball.news.domain.model.Article
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,10 +43,7 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import white.ball.news.R
-import white.ball.news.data.api.ApiService
 import white.ball.news.domain.repository.RoomRepository
-import white.ball.news.domain.util.RenderUtil
-import white.ball.news.domain.util.TextUtil
 import white.ball.news.presentation.ui.theme.AdditionalInformationColor
 
 
@@ -60,11 +54,9 @@ fun DetailArticleScreen(
     snackbarHostState: SnackbarHostState,
     context: Context,
 ) {
-    val renderUtil = RenderUtil()
     val coroutineScope = rememberCoroutineScope()
+    val isSubscribed = remember { mutableStateOf(clickArticle.isInYourBookmark) }
 
-    // Состояния для статьи и других данных
-    val clickArticleState = remember { mutableStateOf(clickArticle) }
     val articlesInBookmarksState = remember { mutableStateOf<List<Article>>(emptyList()) }
 
     LaunchedEffect(Unit) {
@@ -80,7 +72,7 @@ fun DetailArticleScreen(
             .padding(bottom = 100.dp)
     ) {
         AsyncImage(
-            model = clickArticleState.value.urlToImage,
+            model = clickArticle.urlToImage,
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
@@ -97,7 +89,7 @@ fun DetailArticleScreen(
         ) {
             Column {
                 Text(
-                    text = clickArticleState.value.sourceName,
+                    text = clickArticle.sourceName,
                     style = TextStyle(
                         color = Color.Black,
                         textAlign = TextAlign.Justify,
@@ -108,7 +100,7 @@ fun DetailArticleScreen(
                 )
 
                 Text(
-                    text = clickArticleState.value.author.ifEmpty { "Unknown author" },
+                    text = clickArticle.author.ifEmpty { "Unknown author" },
                     style = TextStyle(
                         color = Color.Black,
                         textAlign = TextAlign.Justify,
@@ -119,7 +111,7 @@ fun DetailArticleScreen(
                 )
 
                 Text(
-                    text = clickArticleState.value.publishedAt,
+                    text = clickArticle.publishedAt,
                     style = TextStyle(
                         color = AdditionalInformationColor,
                         fontSize = 14.sp,
@@ -128,30 +120,49 @@ fun DetailArticleScreen(
                 )
             }
             Row {
-                Image(
-                    painter = painterResource(
-                        renderUtil.loadArticleIconBookmark(
-                            clickArticleState.value,
-                            articlesInBookmarksState.value
-                        )
-                    ),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(end = 20.dp)
-                        .size(35.dp)
-                        .clickable {
-                            // Обработка статей в закладках
-                            clickArticleState.value =
-                                clickArticleState.value.copy(isInYourBookmark = !clickArticleState.value.isInYourBookmark)
-                            coroutineScope.launch(Dispatchers.IO) {
-                                if (clickArticleState.value.isInYourBookmark) {
-                                    roomRepository.putNewArticle(clickArticleState.value)
-                                } else {
-                                    roomRepository.deleteArticle(clickArticleState.value)
-                                }
+                Crossfade(
+                    targetState = isSubscribed.value,
+                    label = "",
+                    animationSpec = tween(800)) { isBookmarked ->
+                    if (isBookmarked) {
+                        Image(
+                            painter = painterResource(R.drawable.icon_remove_bookmark_default),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(end = 20.dp)
+                                .size(35.dp)
+                                .clickable {
+                                    clickArticle.isInYourBookmark = false
+                                    isSubscribed.value = clickArticle.isInYourBookmark
+                                    articlesInBookmarksState.value = articlesInBookmarksState.value
+                                        .filter { it.title == clickArticle.title }
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        roomRepository.deleteArticle(clickArticle)
+                                    }
                             }
-                        }
-                )
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(R.drawable.icon_add_bookmark_default),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(end = 20.dp)
+                                .size(35.dp)
+                                .clickable {
+                                    clickArticle.isInYourBookmark = true
+                                    isSubscribed.value = clickArticle.isInYourBookmark
+                                    val articlesUpdated = mutableListOf<Article>()
+                                    articlesUpdated.addAll(articlesInBookmarksState.value)
+                                    articlesUpdated.add(clickArticle)
+                                    articlesInBookmarksState.value = articlesUpdated
+
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                      roomRepository.putNewArticle(clickArticle)
+                                     }
+                                }
+                        )
+                    }
+                }
 
                 // Иконка "поделиться"
                 Image(
@@ -161,7 +172,7 @@ fun DetailArticleScreen(
                         .size(35.dp)
                         .clickable {
                             val openShareApp = Intent(Intent.ACTION_SEND).apply {
-                                putExtra(Intent.EXTRA_TEXT, clickArticleState.value.url)
+                                putExtra(Intent.EXTRA_TEXT, clickArticle.url)
                                 type = "text/plain"
                             }
                             context.startActivity(Intent.createChooser(openShareApp, null))
@@ -177,7 +188,7 @@ fun DetailArticleScreen(
                 .padding(start = 30.dp, end = 30.dp, top = 10.dp)
         ) {
             Text(
-                text = clickArticleState.value.title,
+                text = clickArticle.title,
                 style = TextStyle(
                     color = Color.Black,
                     textAlign = TextAlign.Justify,
@@ -187,7 +198,7 @@ fun DetailArticleScreen(
             )
 
             Text(
-                text = clickArticleState.value.content.split("[").first(),
+                text = clickArticle.content.split("[").first(),
                 style = TextStyle(
                     color = Color.Black,
                     textAlign = TextAlign.Justify,
@@ -212,7 +223,7 @@ fun DetailArticleScreen(
 
                             if (snackbarAction == SnackbarResult.ActionPerformed) {
                                 val openURL = Intent(Intent.ACTION_VIEW).apply {
-                                    data = Uri.parse(clickArticleState.value.url)
+                                    data = Uri.parse(clickArticle.url)
                                 }
                                 context.startActivity(openURL)
                             }

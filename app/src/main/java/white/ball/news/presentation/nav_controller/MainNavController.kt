@@ -81,7 +81,7 @@ fun MainNavController(
 
         composable(route = "detail_article_bookmark") {
             DetailArticleScreen(
-                clickArticle = checkNotNull(listenerClickArticle.value),
+                clickArticle = listenerClickArticle.value!!,
                 roomRepository = roomService,
                 snackbarHostState = snackbarHostState,
                 context = context
