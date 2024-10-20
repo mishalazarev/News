@@ -8,7 +8,6 @@ import white.ball.news.domain.model.Article
 import white.ball.news.domain.repository.RoomRepository
 
 class BookmarksViewModel(private val roomRepository: RoomRepository) : ViewModel() {
-    // Хранит статьи в закладках
     private val _articlesInBookmarks = mutableStateListOf<Article>()
     val articlesInBookmarks: List<Article> get() = _articlesInBookmarks
 

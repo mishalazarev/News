@@ -51,7 +51,6 @@ import white.ball.news.presentation.view_model.BookmarksViewModel
 @Composable
 fun DetailArticleScreen(
     clickArticle: Article,
-    roomRepository: RoomRepository,
     snackbarHostState: SnackbarHostState,
     bookmarksViewModel: BookmarksViewModel,
     context: Context,

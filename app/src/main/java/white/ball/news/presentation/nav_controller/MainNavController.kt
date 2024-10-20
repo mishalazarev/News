@@ -31,10 +31,15 @@ fun MainNavController(
     roomService: RoomService,
     bookmarksViewModel: BookmarksViewModel,
 ) {
+    // Утилиты для работы с текстом
     val textUtil = TextUtil()
+
+    // Состояние для сохранения выбранной статьи
     val listenerClickArticle = remember { mutableStateOf<Article?>(null) }
-    val clickArticleHandler: (Article) -> Unit = { clickArticle ->
-        listenerClickArticle.value = clickArticle
+
+    // Обработчик нажатия на статью
+    val clickArticleHandler: (Article) -> Unit = { clickedArticle ->
+        listenerClickArticle.value = clickedArticle
         navController.navigate("detail_article_bookmark")
     }
 
@@ -42,9 +47,10 @@ fun MainNavController(
         navController = navController,
         startDestination = ItemBottomBar.MainScreen.route
     ) {
+        // Главный экран
         composable(route = ItemBottomBar.MainScreen.route) {
             MainScreen(
-                clickArticle = clickArticleHandler,
+                onBookmarkClick = clickArticleHandler,
                 articles = articles,
                 roomRepository = roomService,
                 context = context,
@@ -52,6 +58,7 @@ fun MainNavController(
             )
         }
 
+        // Экран отсутствия интернета
         composable(route = "internet_not_working_screen") {
             InternetNotWorking(
                 getArticlesFromApi = {
@@ -66,28 +73,29 @@ fun MainNavController(
             )
         }
 
+        // Экран закладок
         composable(route = ItemBottomBar.BookmarksScreen.route) {
             BookmarksScreen(
                 clickArticle = clickArticleHandler,
-                roomRepository = roomService,
                 bookmarksViewModel = bookmarksViewModel
             )
         }
 
+        // Экран поиска статей
         composable(route = ItemBottomBar.SearchScreen.route) {
             SearchScreen(
                 articles = articles,
                 bookmarksViewModel = bookmarksViewModel,
-                clickArticle = clickArticleHandler,
+                onBookmarkClick = clickArticleHandler,
                 roomRepository = roomService,
                 context = context
             )
         }
 
+        // Экран подробностей статьи из закладок
         composable(route = "detail_article_bookmark") {
             DetailArticleScreen(
-                clickArticle = listenerClickArticle.value!!,
-                roomRepository = roomService,
+                clickArticle = checkNotNull(listenerClickArticle.value) { "Selected article cannot be null" },
                 snackbarHostState = snackbarHostState,
                 context = context,
                 bookmarksViewModel = bookmarksViewModel,

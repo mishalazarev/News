@@ -9,6 +9,7 @@ import androidx.navigation.NavHostController
 import white.ball.news.data.api.ApiService
 import white.ball.news.data.storage.service.RoomService
 import white.ball.news.domain.model.Article
+import white.ball.news.presentation.bottom_bar.MainBottomAppBar
 import white.ball.news.presentation.view_model.BookmarksViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
