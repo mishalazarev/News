@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import androidx.lifecycle.MutableLiveData
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -15,7 +16,7 @@ import white.ball.news.data.api.util.APIUtil
 import white.ball.news.domain.model.Article
 import white.ball.news.domain.repository.RoomRepository
 
-const val API_KEY = "488fa1a4a384410c847b507b77a54732"
+const val API_KEY = "df94cae1412f40679dd7e87b6a1dee01"
 const val TAG = "log_tag"
 
 class ApiService {
@@ -23,7 +24,7 @@ class ApiService {
     private val apiUtil = APIUtil()
 
     fun getArticles(
-        articlesListener: MutableState<List<Article>>,
+        articlesListener: MutableLiveData<List<Article>>,
         context: Context,
         todayDayForAPI: String,
     ) {

@@ -1,5 +1,6 @@
 package white.ball.news.data.storage.room
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -10,7 +11,7 @@ import white.ball.news.domain.model.Article
 interface ArticleDao {
 
     @Query("SELECT * FROM articles")
-    fun getAllArticles(): List<Article>
+    fun getAllArticles(): LiveData<List<Article>>
 
     @Insert
     fun putNewArticle(newArticleDBO: Article)

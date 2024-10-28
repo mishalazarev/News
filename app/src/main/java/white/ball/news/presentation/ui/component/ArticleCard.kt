@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import white.ball.news.domain.model.Article
 import white.ball.news.presentation.bottom_bar.ArticleDetailRow
-import white.ball.news.presentation.view_model.BookmarksViewModel
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,13 +26,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import white.ball.news.R
+import white.ball.news.presentation.view_model.MainViewModel
 
 
 @Composable
 fun ArticleCard(
     article: Article,
     onBookmarkClick: (Article) -> Unit,
-    bookmarksViewModel: BookmarksViewModel,
+    bookmarksViewModel: MainViewModel,
 ) {
     val searchTextState by remember { mutableStateOf("") }
 

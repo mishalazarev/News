@@ -13,13 +13,19 @@ import androidx.compose.ui.unit.dp
 import white.ball.news.domain.model.Article
 import white.ball.news.presentation.ui.component.BookmarkCard
 import white.ball.news.presentation.view_model.BookmarksViewModel
+import white.ball.news.presentation.view_model.view_model_factory.rememberViewModel
 
 
 @Composable
 fun BookmarksScreen(
-    bookmarksViewModel: BookmarksViewModel,
     clickArticle: (Article) -> Unit,
 ) {
+    val bookmarksViewModel: BookmarksViewModel = rememberViewModel {
+       BookmarksViewModel(
+           it.articlesInBookmarks,
+           it.roomService)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -28,12 +34,17 @@ fun BookmarksScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         LazyColumn {
-            items(bookmarksViewModel.articlesInBookmarks) { article ->
-                BookmarkCard(
-                    article = article,
-                    onClick = { clickArticle(article) }
-                )
+            bookmarksViewModel.articlesInBookmarks.value?.size?.let {
+                items(it) { article ->
+                    val currentClickArticle = bookmarksViewModel.articlesInBookmarks.value!![article]
+                    BookmarkCard(
+                        article = currentClickArticle,
+                        onClick = { clickArticle(currentClickArticle) }
+                    )
+                }
             }
         }
     }
 }
+
+

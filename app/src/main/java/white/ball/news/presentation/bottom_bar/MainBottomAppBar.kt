@@ -1,7 +1,6 @@
 package white.ball.news.presentation.bottom_bar
 
 import android.annotation.SuppressLint
-import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -39,28 +39,38 @@ import white.ball.news.presentation.ui.theme.SnackBarColor
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.launch
 import white.ball.news.data.api.ApiService
 import white.ball.news.data.storage.service.RoomService
 import white.ball.news.domain.model.Article
 import white.ball.news.presentation.ui.InternetNotWorking
 import white.ball.news.presentation.ui.ShimmerItems
 import white.ball.news.presentation.view_model.BookmarksViewModel
+import white.ball.news.presentation.view_model.MainScreenViewModel
+import white.ball.news.presentation.view_model.view_model_factory.rememberViewModel
 
 @ExperimentalMaterial3Api
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
 @Composable
 fun MainBottomAppBar(
-    articles: MutableState<List<Article>>,
-    bookmarksViewModel: BookmarksViewModel,
     navController: NavHostController,
-    isLoading: MutableState<Boolean>,
     snackbarHostState: SnackbarHostState,
-    roomService: RoomService,
-    apiService: ApiService,
-    context: Context,
 ) {
+    val apiService = ApiService()
     val textUtil = TextUtil()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val mainViewModel = rememberViewModel {
+        MainScreenViewModel(
+            it.roomService,
+            it.articlesAPI,
+            it.articlesInBookmarks
+        )
+    }
     val itemsBottomBarNavigation = arrayOf(
         ItemBottomBar.MainScreen,
         ItemBottomBar.BookmarksScreen,
@@ -70,27 +80,20 @@ fun MainBottomAppBar(
         ShimmerItems(
             contentAfterLoading = {
                 MainNavController(
-                    context,
                     navController,
                     snackbarHostState,
-                    articles,
-                    apiService,
-                    roomService,
-                    bookmarksViewModel,
                 )
             },
-            isLoading
         )
     }
 
+    coroutineScope.launch {
+        mainViewModel.updateArticlesWithBookmarks()
+    }
+
     MainNavController(
-        context,
         navController,
         snackbarHostState,
-        articles,
-        apiService,
-        roomService,
-        bookmarksViewModel,
     )
 
     Scaffold(
@@ -178,16 +181,17 @@ fun MainBottomAppBar(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                if (articles.value.isEmpty()) {
+                if (mainViewModel.mArticlesAPI.value!!.isEmpty()) {
                     InternetNotWorking(
                         getArticlesFromApi = {
+                            val articles = MutableLiveData<List<Article>>()
                             apiService.getArticles(
                                 articlesListener = articles,
                                 context = context,
                                 todayDayForAPI = textUtil.getTodayDayForAPI()
                             )
-                        },
-                        context
+                            mainViewModel.setArticlesAPI(articles.value!!.toList())
+                        }
                     )
                 } else {
                     loadArticles()

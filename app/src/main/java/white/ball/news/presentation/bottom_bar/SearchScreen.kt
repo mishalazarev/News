@@ -1,5 +1,6 @@
 package white.ball.news.presentation.bottom_bar
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -28,31 +30,31 @@ import white.ball.news.domain.repository.RoomRepository
 import white.ball.news.presentation.ui.component.ArticleCard
 import white.ball.news.presentation.ui.component.SearchTextField
 import white.ball.news.presentation.view_model.BookmarksViewModel
+import white.ball.news.presentation.view_model.MainViewModel
+import white.ball.news.presentation.view_model.SearchScreenViewModel
+import white.ball.news.presentation.view_model.view_model_factory.rememberViewModel
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun SearchScreen(
-    articles: MutableState<List<Article>>,
-    bookmarksViewModel: BookmarksViewModel,
     onBookmarkClick: (Article) -> Unit,
-    roomRepository: RoomRepository,
-    context: Context
 ) {
     // Состояния для текстового поля поиска
     val searchTextState = remember { mutableStateOf(TextFieldValue("")) }
     val articlesResponse = remember { mutableStateOf(listOf<Article>()) }
     val coroutineScope = rememberCoroutineScope()
     val searchService = SearchService()
-
-
-    roomRepository.loadDataBase(context)
+    val searchViewModel = rememberViewModel {
+        SearchScreenViewModel(
+            it.roomService,
+            it.articlesAPI,
+            it.articlesInBookmarks,
+        )
+    }
 
     // Обновление закладок в статьях
-    LaunchedEffect(Unit) {
-        val updatedArticles = articles.value.map { article ->
-            val bookmarkArticle = bookmarksViewModel.articlesInBookmarks.find { it.title == article.title }
-            bookmarkArticle ?: article
-        }
-        articles.value = updatedArticles
+    coroutineScope.launch {
+        searchViewModel.updateArticlesWithBookmarks()
     }
 
     // Основная структура экрана
@@ -62,17 +64,16 @@ fun SearchScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SearchTextField(
-            articles = articles,
+            articles = searchViewModel.mArticlesAPI,
             searchTextState = searchTextState,
             articlesResponse = articlesResponse,
             searchService = searchService,
-            coroutineScope = coroutineScope
         )
 
         SearchResultsList(
             articlesResponse = articlesResponse,
             onBookmarkClick = onBookmarkClick,
-            bookmarksViewModel = bookmarksViewModel,
+            bookmarksViewModel = searchViewModel,
         )
     }
 }
@@ -82,7 +83,7 @@ fun SearchScreen(
 fun SearchResultsList(
     articlesResponse: MutableState<List<Article>>,
     onBookmarkClick: (Article) -> Unit,
-    bookmarksViewModel: BookmarksViewModel,
+    bookmarksViewModel: MainViewModel,
 ) {
     LazyColumn(
         modifier = Modifier
@@ -102,7 +103,7 @@ fun SearchResultsList(
 @Composable
 fun ArticleDetailRow(
     article: Article,
-    bookmarksViewModel: BookmarksViewModel,
+    bookmarksViewModel: MainViewModel,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -131,7 +132,7 @@ fun ArticleDetailRow(
 @Composable
 fun BookmarkIcon(
     article: Article,
-    bookmarksViewModel: BookmarksViewModel) {
+    bookmarksViewModel: MainViewModel) {
     val coroutineScope = rememberCoroutineScope()
 
     Image(
@@ -152,7 +153,7 @@ fun BookmarkIcon(
     )
 }
 
-private suspend fun toggleBookmark(article: Article, bookmarksViewModel: BookmarksViewModel) {
+private suspend fun toggleBookmark(article: Article, bookmarksViewModel: MainViewModel) {
     article.isInYourBookmark = !article.isInYourBookmark
     if (article.isInYourBookmark) {
         bookmarksViewModel.addBookmark(article)

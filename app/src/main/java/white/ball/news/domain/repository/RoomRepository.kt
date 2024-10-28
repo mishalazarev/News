@@ -1,6 +1,7 @@
 package white.ball.news.domain.repository
 
 import android.content.Context
+import androidx.lifecycle.LiveData
 import white.ball.news.data.storage.room.ArticleDao
 import white.ball.news.domain.model.Article
 
@@ -11,7 +12,9 @@ interface RoomRepository {
     fun getArticleDao(): ArticleDao
 
     fun addBookmark(newArticle: Article)
-    suspend fun getArticlesInBookmarks(): List<Article>
+
+    suspend fun getArticlesInBookmarks(): LiveData<List<Article>>
+
     suspend fun removeBookmark(deletedArticle: Article)
 
 }

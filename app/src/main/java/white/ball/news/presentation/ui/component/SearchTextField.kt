@@ -15,13 +15,14 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.LiveData
 import kotlinx.coroutines.launch
 import white.ball.news.domain.model.Article
 import white.ball.news.domain.service.SearchService
@@ -29,12 +30,13 @@ import white.ball.news.presentation.ui.theme.SnackBarColor
 
 @Composable
 fun SearchTextField(
-    articles: MutableState<List<Article>>,
+    articles: LiveData<List<Article>>,
     searchTextState: MutableState<TextFieldValue>,
     articlesResponse: MutableState<List<Article>>,
     searchService: SearchService,
-    coroutineScope: CoroutineScope
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     TextField(
         value = searchTextState.value,
         onValueChange = { value -> searchTextState.value = value },
@@ -65,7 +67,7 @@ fun SearchTextField(
                     .clickable {
                         coroutineScope.launch {
                             articlesResponse.value = searchService.getAllArticlesOnRequest(
-                                searchTextState.value.text, articles.value
+                                searchTextState.value.text, articles
                             )
                         }
                     }

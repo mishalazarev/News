@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -43,20 +44,25 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import white.ball.news.R
-import white.ball.news.domain.repository.RoomRepository
 import white.ball.news.presentation.ui.theme.AdditionalInformationColor
-import white.ball.news.presentation.view_model.BookmarksViewModel
+import white.ball.news.presentation.view_model.DetailScreenViewModel
+import white.ball.news.presentation.view_model.view_model_factory.rememberViewModel
 
 
 @Composable
 fun DetailArticleScreen(
     clickArticle: Article,
     snackbarHostState: SnackbarHostState,
-    bookmarksViewModel: BookmarksViewModel,
-    context: Context,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val isSubscribed = remember { mutableStateOf(clickArticle.isInYourBookmark) }
+    val context = LocalContext.current
+    val detailViewModel = rememberViewModel {
+        DetailScreenViewModel(
+            it.articlesInBookmarks,
+            it.roomService
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -128,7 +134,7 @@ fun DetailArticleScreen(
                                     clickArticle.isInYourBookmark = false
                                     isSubscribed.value = clickArticle.isInYourBookmark
                                     coroutineScope.launch(Dispatchers.IO) {
-                                        bookmarksViewModel.removeBookmark(clickArticle)
+                                        detailViewModel.removeBookmark(clickArticle)
                                     }
                             }
                         )
@@ -144,7 +150,7 @@ fun DetailArticleScreen(
                                     isSubscribed.value = clickArticle.isInYourBookmark
 
                                     coroutineScope.launch(Dispatchers.IO) {
-                                        bookmarksViewModel.addBookmark(clickArticle)
+                                        detailViewModel.addBookmark(clickArticle)
                                      }
                                 }
                         )

@@ -1,5 +1,6 @@
 package white.ball.news.presentation.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -28,6 +29,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,19 +56,29 @@ import white.ball.news.R
 import white.ball.news.domain.model.Article
 import white.ball.news.presentation.ui.theme.ArticleBlockColor
 import white.ball.news.presentation.ui.theme.MainColor
+import white.ball.news.presentation.view_model.MainScreenViewModel
+import white.ball.news.presentation.view_model.view_model_factory.rememberViewModel
 import kotlin.random.Random
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun ShimmerItems(
     contentAfterLoading: @Composable () -> Unit,
-    isLoading: MutableState<Boolean>
 ) {
-    LaunchedEffect(true) {
-        delay(Random.nextLong(1000,5000))
-        isLoading.value = true
+    val coroutineScope = rememberCoroutineScope()
+    val mainViewModel = rememberViewModel {
+        MainScreenViewModel(
+            it.roomService,
+            it.articlesAPI,
+            it.articlesInBookmarks
+        )
     }
 
-    if (isLoading.value) {
+    coroutineScope.launch {
+        mainViewModel.loadingArticlesAPI()
+    }
+
+    if (mainViewModel.isLoading.value!!) {
         contentAfterLoading()
     } else {
         LazyColumn(

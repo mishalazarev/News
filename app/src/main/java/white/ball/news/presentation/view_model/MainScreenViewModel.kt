@@ -1,10 +1,11 @@
 package white.ball.news.presentation.view_model
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import white.ball.news.domain.model.Article
 import white.ball.news.domain.repository.RoomRepository
 
-class BookmarksViewModel(
+class MainScreenViewModel(
     roomRepository: RoomRepository,
     articlesAPI: LiveData<List<Article>>,
     articlesInBookmarks: LiveData<List<Article>>,
@@ -13,5 +14,7 @@ class BookmarksViewModel(
     articlesAPI,
     articlesInBookmarks
 ) {
+
+
 
 }

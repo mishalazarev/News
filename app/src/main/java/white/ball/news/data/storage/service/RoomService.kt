@@ -1,6 +1,7 @@
 package white.ball.news.data.storage.service
 
 import android.content.Context
+import androidx.lifecycle.LiveData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import white.ball.news.data.storage.room.ArticleDao
@@ -27,7 +28,7 @@ class RoomService : RoomRepository {
     }
 
 
-    override suspend fun getArticlesInBookmarks(): List<Article> {
+    override suspend fun getArticlesInBookmarks(): LiveData<List<Article>> {
         return withContext(Dispatchers.IO) {
             articleDao.getAllArticles()
         }

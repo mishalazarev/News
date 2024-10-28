@@ -1,16 +1,16 @@
 package white.ball.news.presentation.nav_controller
 
-import android.content.Context
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import white.ball.news.data.api.ApiService
-import white.ball.news.data.storage.service.RoomService
 import white.ball.news.domain.model.Article
 import white.ball.news.domain.model.ItemBottomBar
 import white.ball.news.domain.util.TextUtil
@@ -19,23 +19,28 @@ import white.ball.news.presentation.bottom_bar.MainScreen
 import white.ball.news.presentation.bottom_bar.SearchScreen
 import white.ball.news.presentation.detail_screen.DetailArticleScreen
 import white.ball.news.presentation.ui.InternetNotWorking
-import white.ball.news.presentation.view_model.BookmarksViewModel
+import white.ball.news.presentation.view_model.MainScreenViewModel
+import white.ball.news.presentation.view_model.view_model_factory.rememberViewModel
 
 @Composable
 fun MainNavController(
-    context: Context,
     navController: NavHostController,
     snackbarHostState: SnackbarHostState,
-    articles: MutableState<List<Article>>,
-    apiService: ApiService,
-    roomService: RoomService,
-    bookmarksViewModel: BookmarksViewModel,
 ) {
     // Утилиты для работы с текстом
+    val apiService = ApiService()
     val textUtil = TextUtil()
+    val context = LocalContext.current
 
     // Состояние для сохранения выбранной статьи
     val listenerClickArticle = remember { mutableStateOf<Article?>(null) }
+    val mainViewModel = rememberViewModel {
+        MainScreenViewModel(
+            it.roomService,
+            it.articlesAPI,
+            it.articlesInBookmarks,
+        )
+    }
 
     // Обработчик нажатия на статью
     val clickArticleHandler: (Article) -> Unit = { clickedArticle ->
@@ -51,10 +56,6 @@ fun MainNavController(
         composable(route = ItemBottomBar.MainScreen.route) {
             MainScreen(
                 onBookmarkClick = clickArticleHandler,
-                articles = articles,
-                roomRepository = roomService,
-                context = context,
-                bookmarksViewModel = bookmarksViewModel
             )
         }
 
@@ -62,14 +63,15 @@ fun MainNavController(
         composable(route = "internet_not_working_screen") {
             InternetNotWorking(
                 getArticlesFromApi = {
+                    val articles = MutableLiveData<List<Article>>()
                     apiService.getArticles(
-                        articles,
-                        context,
-                        textUtil.getTodayDayForAPI()
+                        articlesListener = articles,
+                        context = context,
+                        todayDayForAPI = textUtil.getTodayDayForAPI()
                     )
+                    mainViewModel.setArticlesAPI(articles.value!!.toList())
                     navController.navigate(ItemBottomBar.MainScreen.route)
-                },
-                context
+                }
             )
         }
 
@@ -77,18 +79,13 @@ fun MainNavController(
         composable(route = ItemBottomBar.BookmarksScreen.route) {
             BookmarksScreen(
                 clickArticle = clickArticleHandler,
-                bookmarksViewModel = bookmarksViewModel
             )
         }
 
         // Экран поиска статей
         composable(route = ItemBottomBar.SearchScreen.route) {
             SearchScreen(
-                articles = articles,
-                bookmarksViewModel = bookmarksViewModel,
                 onBookmarkClick = clickArticleHandler,
-                roomRepository = roomService,
-                context = context
             )
         }
 
@@ -97,8 +94,6 @@ fun MainNavController(
             DetailArticleScreen(
                 clickArticle = checkNotNull(listenerClickArticle.value) { "Selected article cannot be null" },
                 snackbarHostState = snackbarHostState,
-                context = context,
-                bookmarksViewModel = bookmarksViewModel,
             )
         }
     }
